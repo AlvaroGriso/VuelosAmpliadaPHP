@@ -1,47 +1,51 @@
 <?php
-require 'vendor/autoload.php';
 
-$cliente = new MongoDB\Client("mongodb://localhost:27017");
-$coleccion = $cliente->VuelosAmpliada->vuelos2_0;
+require 'vendor/autoload.php'; // include Composer goodies
 
-$codigo = "IB706";
-$dni = "44556677H";
-$codigoVenta = "GHJ7766GG";
+try {
+    $cliente = new MongoDB\Client("mongodb://localhost:27017");
+    $coleccion = $cliente->VuelosAmpliado->vuelos2_0;
 
-$nuevoDni = "Y4904844Q";
-$nuevoNombre = "OLIVER";
-$nuevoApellido = "BENSHI";
+    $codigoVuelo = $_GET['codigo'];
+    $dni = $_GET['dni'];
+    $codigoVenta = $_GET['codigoVenta'];
+    $dniPagador = $_GET['dniPagador'];
+    $apellido = $_GET['apellido'];
+    $nombre = $_GET['nombre'];
 
-$query= array('codigo'=>$codigo);
-
-//$queryModificacion = array('dni'=>$nuevoDni,'nombre'=>$nuevoNombre,'apellido'=>$nuevoApellido);
-
-$resultado = $coleccion->find($query);
-
-$list_vuelos[] = array();
-$count = 0;
-
-
-
-
-foreach ($resultado->toArray() as $vuelo) {
-    foreach ($vuelo['vendidos'] as $vendidos) {
-        if ($vendidos["dni"] == $dni) {
-
-            $vendidos["dni"] = $nuevoDni;
-            $vendidos["nombre"] = $nuevoNombre;
-            $vendidos["apellido"] = $nuevoApellido;
-
-            $coleccion->updateOne(
-                ['codigo' =>$codigo],
-                [ '$set' => array('vendidos.$.dni'=> $vendidos)]
-            );
+    $query = array('$and' => array(array('codigo' => $codigoVuelo), array('vendidos.codigoVenta' => $codigoVenta)));
+    $resultado = $coleccion->find($query);
+    foreach ($resultado->toArray() as $vuelo) {
+      for ($i = 1; $i < sizeof($vuelo["vendidos"]); $i++) {
+        $arrayVendidos = $vuelo["vendidos"][$i];
+        if ($vuelo["vendidos"][$i]["codigoVenta"] == $codigoVenta) {
+          $asientoEncontrado = $i;
+          $numAsiento = $vuelo["vendidos"][$i]['asiento'];
+          $tarjeta = $vuelo["vendidos"][$i]["tarjeta"];
         }
+      }
     }
 
-    $list_vuelos= $vuelo;
-    $count++;
-}
+    $nuevoAsiento = array('asiento' => $numAsiento, 'dni' => $dni, 'apellido' => $apellido, 'nombre' => $nombre, 'dniPagador' => $dniPagador, 'tarjeta' => $tarjeta, 'codigoVenta' => $codigoVenta);
+    $resultado = $coleccion->updateOne(array("codigo"=> $codigoVuelo),array('$set' => array("vendidos.$asientoEncontrado" => $nuevoAsiento)));
+    $query = array('codigo' => $codigoVuelo);
+    $resultado = $coleccion->find($query);
 
-$miVariable = json_encode($list_vuelos, JSON_PRETTY_PRINT);
-echo $miVariable;
+    $estado = false;
+    $estado = true;
+
+    $list_vuelos[] = array();
+
+    $arrayFinal = array(
+        "estado" => $estado,
+        "hola" => $resultado
+
+
+    );
+
+    header("Content-type:application/json");
+    echo json_encode($arrayFinal);
+
+} catch (MongoDB\Driver\Exception\Exception $e) {
+    print_r($e);
+}
