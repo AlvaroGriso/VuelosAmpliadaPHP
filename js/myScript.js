@@ -323,12 +323,7 @@ function cancelarBillete() {
       try {
         let myObj = JSON.parse(this.responseText);
 
-        if (myObj.estado == true) {
-          var mensaje = "Cancelación con éxito";
-          pintaMensaje(true, mensaje);
-        } else {
-          pintaMensaje(false,myObj.mensaje);
-        }
+          pintaMensaje(myObj.estado, myObj.mensaje);
 
       } catch (e) {
         let arrayMensaje = {
