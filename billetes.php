@@ -1,56 +1,74 @@
 <?php
 
 require 'vendor/autoload.php'; // include Composer goodies
+if (is_array($_POST)) {
 
-try {
-    $cliente = new MongoDB\Client("mongodb://localhost:27017");
-    $coleccion = $cliente->VuelosAmpliada->vuelos2_0;
+    try {
+        $cliente = new MongoDB\Client("mongodb://localhost:27017");
+        $coleccion = $cliente->VuelosAmpliada->vuelos2_0;
 
-    $fecha = $_GET['fecha'];
-    $origen = $_GET['origen'];
-    $destino = $_GET['destino'];
+        $query = array();
 
-    $query = array('origen' => $origen, 'fecha' => $fecha, 'destino' => $destino);
-    $resultado = $coleccion->find($query);
+        if (isset($_GET['fecha'])) {
+            $fecha = $_GET['fecha'];
+            $query['fecha'] = $fecha;
+        }
 
-    $estado = false;
-    $busqueda[] = [];
-    $estado = true;
-    $busqueda = ['fecha' => $fecha, 'origen' => $origen, 'destino' => $destino];
+        if (isset($_GET['origen'])) {
+            $origen = $_GET['origen'];
+            $query['origen'] = $origen;
+        }
 
-    $count = 0;
-    $list_vuelos[] = array();
+        if (isset($_GET['destino'])) {
+            $destino = $_GET['destino'];
+            $query['destino'] = $destino;
+        }
 
-    foreach ($resultado->toArray() as $vuelo) {
+        $resultado = $coleccion->find($query);
 
-        $array = array(
-            "codigo" => $vuelo["codigo"],
-            "origen" => $vuelo["origen"],
-            "destino" => $vuelo["destino"],
-            "fecha" => $vuelo["fecha"],
-            "hora" => $vuelo["hora"],
-            "plazas_totales" => $vuelo["plazas_totales"],
-            "plazas_disponibles" => $vuelo["plazas_disponibles"]
+        $estado = false;
+        $busqueda[] = [];
+
+        $busqueda = $query;
+
+        $count = 0;
+        $list_vuelos[] = array();
+
+        foreach ($resultado->toArray() as $vuelo) {
+
+            $array = array(
+                "codigo" => $vuelo["codigo"],
+                "origen" => $vuelo["origen"],
+                "destino" => $vuelo["destino"],
+                "fecha" => $vuelo["fecha"],
+                "hora" => $vuelo["hora"],
+                "plazas_totales" => $vuelo["plazas_totales"],
+                "plazas_disponibles" => $vuelo["plazas_disponibles"]
+            );
+
+            $list_vuelos[$count] = $array;
+
+            $count++;
+        }
+
+        $estado = false;
+
+        if ($count > 0) {
+            $estado = true;
+        }
+
+        $arrayFinal = array(
+            "estado" => $estado,
+            "encontrados" => $count,
+            "busqueda" => $busqueda,
+            "vuelos" => $list_vuelos
         );
 
-        $list_vuelos[$count] = $array;
+        $miVariable = json_encode($arrayFinal, JSON_PRETTY_PRINT);
+        echo $miVariable;
 
-        $count++;
+    } catch (MongoDB\Driver\Exception\Exception $e) {
+        print_r($e);
     }
-
-    $arrayFinal = array(
-        "estado" => $estado,
-        "encontrado" => $count,
-        "busqueda" => $busqueda,
-        "vuelos" => $list_vuelos
-    );
-
-    header("Content-type:application/json");
-    echo json_encode($arrayFinal);
-
-} catch (MongoDB\Driver\Exception\Exception $e) {
-    print_r($e);
 }
-
-
 

@@ -5,7 +5,7 @@ var miRuta;
 //miRuta = prompt ("Copia y pega la ruta de tu 'puerta de entrada'");
 
 if (miRuta != "") {
-  miRuta = "http://localhost/misProyectos/pruebaMongo/cancelar.php";
+  miRuta = "http://localhost/misProyectos/pruebaMongo/modificar.php";
 }
 
 console.log("URL del servidor:" + miRuta);
@@ -304,6 +304,53 @@ function comprarBillete() {
   };
 
   xhttp.open("POST", miRuta, true);
+  xhttp.setRequestHeader("Content-type", "application/json");
+
+  xhttp.send(peticion);
+
+}
+
+function cancelarBillete() {
+
+  var peticion = JSON.stringify(capturaDatosForm());
+
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+
+      console.log("Respuesta: " + this.responseText);
+
+      try {
+        let myObj = JSON.parse(this.responseText);
+
+        if (myObj.estado == true) {
+          var mensaje = "Cancelación con éxito";
+          pintaMensaje(true, mensaje);
+        } else {
+          pintaMensaje(false,myObj.mensaje);
+        }
+
+      } catch (e) {
+        let arrayMensaje = {
+          "Error": "El JSON recibido tiene un error de sintaxis. No se puede parsear",
+          "JSON Recibido": this.responseText
+        };
+        pintaMensaje(false, arrayMensaje);
+      }
+
+    } else {
+      if (this.status == 404 && this.readyState == 4) {
+        let arrayMensaje = {
+          "Error 404": "No se encuentra la página del servidor. Revisa la url",
+          "Ruta": miRuta
+        };
+        pintaMensaje(false, arrayMensaje);
+      }
+
+    }
+  };
+
+  xhttp.open("DELETE", miRuta, true);
   xhttp.setRequestHeader("Content-type", "application/json");
 
   xhttp.send(peticion);
