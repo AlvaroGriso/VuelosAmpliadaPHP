@@ -5,7 +5,7 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
 require 'vendor/autoload.php'; // include Composer goodies
 $recibido = file_get_contents('php://input');
 
-    $jsRecibido =json_decode($recibido,true);
+$jsRecibido =json_decode($recibido,true);
 
 try {
     $cliente = new MongoDB\Client("mongodb://localhost:27017");
